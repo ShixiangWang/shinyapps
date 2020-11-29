@@ -19,21 +19,35 @@ ui <- fluidPage(
     id = "outer-content",
     tags$div(
       id = "intro",
-      tags$p("The first column show the role and the other columns show the people or projects.",
-             markdown("Read [CRediT](https://casrai.org/credit/) for contributor roles taxonomy.")),
-      tags$p("For a 3-level contribution table, only 'Minor' and 'Major' are valid, a 'NA' value should put in cell for no contribution.",
-             markdown("Please report any suggestion/bug at [here](https://github.com/ShixiangWang/shinyapps/issues)."))
+      tags$p(
+        "The first column show the role and the other columns show the people or projects.",
+        markdown("Read [CRediT](https://casrai.org/credit/) for contributor roles taxonomy.")
+      ),
+      tags$p(
+        "For a 3-level contribution table, only 'Minor' and 'Major' are valid, a void cell for no contribution.",
+        markdown("Please report any suggestion/bug at [here](https://github.com/ShixiangWang/shinyapps/issues).")
+      )
     )
   ),
   useShinyjs(),
   dataInputUI("input1"),
-  #dataOutputUI("output1"),
-  rHandsontableOutput("data1"),
-  div(style="display:inline-block;width:50%;text-align: center;",
-      actionButton("example", label = "Example data", icon = icon("table")),
-      actionButton("clear", label = "Clear table", icon = icon("broom")),
-      actionButton("run", label = "Plot", icon = icon("paper-plane"))),
-  plotOutput("contribution"),
+
+  fluidRow(
+    column(
+      width = 8,
+      rHandsontableOutput("data1"),
+      div(
+        style = "display:inline-block;width:50%;text-align: center;",
+        actionButton("example", label = "Example data", icon = icon("table")),
+        actionButton("clear", label = "Clear table", icon = icon("broom")),
+        actionButton("run", label = "Plot", icon = icon("paper-plane"))
+      )
+    ),
+    column(
+      width = 4,
+      plotOutput("contribution")
+    )
+  ),
   tags$br(),
   HTML("<p style=\"text-align:center\">&copy; 2020 <a href=\"https://shixiangwang.github.io/home/\">Shixiang Wang<a/><p></p>")
 )
@@ -61,14 +75,15 @@ server <- function(input,
     })
   })
 
-  # dataOutputServer("output1",
-  #   data = data_input1
-  # )
-
+  DF <- reactive({
+    hot_to_r(input$data1)
+  })
   observeEvent(input$run, {
-    output$contribution <- renderPlot({
-      contribution::generate(output$data1)
-    })
+    if (any(DF() != "")) {
+      output$contribution <- renderPlot({
+        contribution::generate(isolate(DF()))
+      })
+    }
   })
 }
 
