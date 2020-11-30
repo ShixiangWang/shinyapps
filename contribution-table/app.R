@@ -4,6 +4,8 @@ library(shinyjs)
 library(DataEditR)
 library(contribution)
 
+reset_data <- as.data.frame(matrix(rep("", 100), ncol = 10))
+
 ui <- fluidPage(
   theme = "style.css",
   # Title
@@ -34,8 +36,7 @@ ui <- fluidPage(
     column(
       width = 6,
       dataInputUI("input1"),
-      tags$br(),
-      tags$br(),
+      actionButton("load", label = "Update upload file", icon = icon("mouse")),
       rHandsontableOutput("data1"),
       tags$br(),
       div(
@@ -59,10 +60,19 @@ server <- function(input,
                    session) {
   data_input1 <- dataInputServer("input1")
 
+  # Bug: 如果已经有数据，加载文件无法自动显示
   output$data1 <- renderRHandsontable({
     if (!is.null(data_input1())) {
       rhandsontable(data_input1())
     }
+  })
+
+  observeEvent(input$load, {
+    output$data1 <- renderRHandsontable({
+      if (!is.null(data_input1())) {
+        rhandsontable(data_input1())
+      }
+    })
   })
 
   observeEvent(input$example, {
@@ -73,7 +83,7 @@ server <- function(input,
 
   observeEvent(input$clear, {
     output$data1 <- renderRHandsontable({
-      rhandsontable(data_input1())
+      rhandsontable(reset_data)
     })
   })
 
