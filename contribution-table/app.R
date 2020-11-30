@@ -30,11 +30,12 @@ ui <- fluidPage(
     )
   ),
   useShinyjs(),
-  dataInputUI("input1"),
-
   fluidRow(
     column(
-      width = 8,
+      width = 6,
+      dataInputUI("input1"),
+      tags$br(),
+      tags$br(),
       rHandsontableOutput("data1"),
       tags$br(),
       div(
@@ -45,7 +46,7 @@ ui <- fluidPage(
       )
     ),
     column(
-      width = 4,
+      width = 6,
       plotOutput("contribution")
     )
   ),
