@@ -36,6 +36,7 @@ ui <- fluidPage(
     column(
       width = 8,
       rHandsontableOutput("data1"),
+      tags$br(),
       div(
         style = "display:inline-block;width:50%;text-align: center;",
         actionButton("example", label = "Example data", icon = icon("table")),
