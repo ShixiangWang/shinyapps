@@ -21,14 +21,13 @@ ui <- fluidPage(
     id = "outer-content",
     tags$div(
       id = "intro",
-      tags$p(
-        "The first column show the role and the other columns show the people or projects.",
-        markdown("Read [CRediT](https://casrai.org/credit/) for contributor roles taxonomy.")
-      ),
-      tags$p(
-        "For a 3-level contribution table, only 'Minor' and 'Major' are valid, a void cell for no contribution.",
-        markdown("Please report any suggestion/bug at [here](https://github.com/ShixiangWang/shinyapps/issues).")
-      )
+      markdown(
+      "This tool generates simple contribution table for credit assignment in a project.\
+      The first column show the role and the other columns show the people or projects. Read [CRediT](https://casrai.org/credit/) for contributor roles taxonomy.
+
+      - For a 3-level contribution table, only 'Minor' and 'Major' are valid, a void cell for no contribution.
+      - Please report any suggestion/bug at [here](https://github.com/ShixiangWang/shinyapps/issues). If you are familiar with R, [contribution](https://github.com/openbiox/contribution) package provides more features.\
+      ")
     )
   ),
   useShinyjs(),
@@ -52,7 +51,7 @@ ui <- fluidPage(
     )
   ),
   tags$br(),
-  HTML("<p style=\"text-align:center\">&copy; 2020 <a href=\"https://shixiangwang.github.io/home/\">Shixiang Wang<a/><p></p>")
+  HTML("<p style=\"text-align:center\">&copy; 2020 <a href=\"https://shixiangwang.github.io/home/\">Shixiang Wang</a><p></p>")
 )
 
 server <- function(input,
