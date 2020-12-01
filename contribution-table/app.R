@@ -62,27 +62,27 @@ server <- function(input,
   # Bug: 如果已经有数据，加载文件无法自动显示
   output$data1 <- renderRHandsontable({
     if (!is.null(data_input1())) {
-      rhandsontable(data_input1())
+      rhandsontable(data_input1(), useTypes = FALSE)
     }
   })
 
   observeEvent(input$load, {
     output$data1 <- renderRHandsontable({
       if (!is.null(data_input1())) {
-        rhandsontable(data_input1())
+        rhandsontable(data_input1(), useTypes = FALSE)
       }
     })
   })
 
   observeEvent(input$example, {
     output$data1 <- renderRHandsontable({
-      rhandsontable(contribution::demo)
+      rhandsontable(contribution::demo, useTypes = FALSE)
     })
   })
 
   observeEvent(input$clear, {
     output$data1 <- renderRHandsontable({
-      rhandsontable(reset_data)
+      rhandsontable(reset_data, useTypes = FALSE)
     })
   })
 
@@ -92,7 +92,7 @@ server <- function(input,
   observeEvent(input$run, {
     if (any(DF() != "")) {
       output$contribution <- renderPlot({
-        contribution::generate(isolate(DF()))
+        contribution::generate(isolate(DF()), show_legend = TRUE)
       })
     }
   })
