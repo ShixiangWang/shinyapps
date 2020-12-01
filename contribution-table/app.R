@@ -54,7 +54,8 @@ ui <- fluidPage(
         style = "display:inline-block;width:50%;text-align: center;",
         actionButton("example", label = "Example data", icon = icon("table")),
         actionButton("clear", label = "Clear table", icon = icon("broom")),
-        actionButton("run", label = "Plot", icon = icon("paper-plane"))
+        actionButton("run", label = "Plot", icon = icon("paper-plane")),
+        downloadButton("downloadplot", label = "Save PDF", icon = icon("download")),
       )
     ),
     column(
@@ -108,6 +109,17 @@ server <- function(input,
       })
     }
   })
+
+  output$downloadplot <- downloadHandler(
+    filename = "contribution.pdf",
+    content = function(file) {
+      nc <- ncol(DF())
+      nr <- nrow(DF())
+      pdf(file, width = 1.1 * nc, height = 1.1 * nr)
+      plot(contribution::generate(DF(), show_legend = TRUE))
+      dev.off()
+    }
+  )
 }
 
 shinyApp(ui, server)
