@@ -75,32 +75,48 @@ server <- function(input,
   # Bug: 如果已经有数据，加载文件无法自动显示
   output$data1 <- renderRHandsontable({
     if (!is.null(data_input1())) {
-      rhandsontable(move_colname_to_row(data_input1()), colHeaders = NULL, useTypes = FALSE)
+      rhandsontable(move_colname_to_row(data_input1()),
+        colHeaders = NULL, useTypes = FALSE,
+        readOnly = FALSE
+      )
     }
   })
 
   observeEvent(input$load, {
     output$data1 <- renderRHandsontable({
       if (!is.null(data_input1())) {
-        rhandsontable(move_colname_to_row(data_input1()), colHeaders = NULL, useTypes = FALSE)
+        rhandsontable(move_colname_to_row(data_input1()),
+          colHeaders = NULL, useTypes = FALSE,
+          readOnly = FALSE
+        )
       }
     })
   })
 
   observeEvent(input$example, {
     output$data1 <- renderRHandsontable({
-      rhandsontable(move_colname_to_row(contribution::demo), colHeaders = NULL, useTypes = FALSE)
+      rhandsontable(move_colname_to_row(contribution::demo),
+        colHeaders = NULL, useTypes = FALSE,
+        readOnly = FALSE
+      )
     })
   })
 
   observeEvent(input$clear, {
     output$data1 <- renderRHandsontable({
-      rhandsontable(reset_data, colHeaders = NULL, useTypes = FALSE)
+      rhandsontable(reset_data,
+        colHeaders = NULL, useTypes = FALSE,
+        readOnly = FALSE
+      )
     })
   })
 
   DF <- reactive({
-    move_row_to_colname(hot_to_r(input$data1))
+    test <<- input$data1
+    df <- hot_to_r(input$data1)
+    print(df)
+    # browser() # uncomment for debugging
+    move_row_to_colname(df)
   })
   observeEvent(input$run, {
     if (any(DF() != "")) {
