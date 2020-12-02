@@ -68,7 +68,7 @@ ui <- fluidPage(
     column(
       width = 6,
       dataInputUI("input1"),
-      actionButton("load", label = "Update upload file", icon = icon("mouse")),
+      actionButton("load", label = "Load upload data", icon = icon("mouse")),
       rHandsontableOutput("data1"),
       tags$br(),
       div(
