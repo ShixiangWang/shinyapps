@@ -166,7 +166,7 @@ server <- function(input,
   observeEvent(input$run, {
     if (any(DF() != "")) {
       output$contribution <- renderPlot({
-        contribution::generate(isolate(DF()), show_legend = TRUE)
+        contribution::generate(isolate(DF()), sort = TRUE, show_legend = TRUE)
       })
     }
   })
@@ -177,7 +177,7 @@ server <- function(input,
       nc <- ncol(DF())
       nr <- nrow(DF())
       pdf(file, width = 1.1 * nc, height = 1.1 * nr)
-      plot(contribution::generate(DF(), show_legend = TRUE))
+      plot(contribution::generate(DF(), sort = TRUE, show_legend = TRUE))
       dev.off()
     }
   )
