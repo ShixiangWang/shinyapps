@@ -10,10 +10,24 @@ move_colname_to_row <- function(df) {
   rbind(colnames(df), df)
 }
 
+
+rm_void <- function(df) {
+  row_keep <- apply(df, 1, function(x) {
+    !all(x %in% c(NA, ""))
+  })
+  col_keep <- apply(df, 2, function(x) {
+    !all(x %in% c(NA, ""))
+  })
+
+  df[row_keep, col_keep, drop = FALSE]
+}
+
 move_row_to_colname <- function(df) {
   colheader <- df[1, ]
   df <- df[-1, ]
   colnames(df) <- colheader
+  # Remove all NA/"" rows/columns
+  df <- rm_void(df)
   df
 }
 
@@ -72,7 +86,6 @@ server <- function(input,
                    session) {
   data_input1 <- dataInputServer("input1", data = c(7, 7))
 
-  # Bug: 如果已经有数据，加载文件无法自动显示
   output$data1 <- renderRHandsontable({
     if (!is.null(data_input1())) {
       rhandsontable(move_colname_to_row(data_input1()),
@@ -83,14 +96,16 @@ server <- function(input,
   })
 
   observeEvent(input$load, {
-    output$data1 <- renderRHandsontable({
-      if (!is.null(data_input1())) {
+    if (!is.null(data_input1()) & !all(data_input1() == "")) {
+      output$data1 <- renderRHandsontable({
         rhandsontable(move_colname_to_row(data_input1()),
           colHeaders = NULL, useTypes = FALSE,
           readOnly = FALSE
         )
-      }
-    })
+      })
+    } else {
+      showNotification("NO input file available.", type = "warning")
+    }
   })
 
   observeEvent(input$example, {
