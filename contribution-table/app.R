@@ -7,7 +7,9 @@ library(contribution)
 reset_data <- as.data.frame(matrix(rep("", 49), ncol = 7))
 
 move_colname_to_row <- function(df) {
-  rbind(colnames(df), df)
+  df <- rbind(colnames(df), df)
+  # colnames(df) <- NULL
+  df
 }
 
 
@@ -30,6 +32,11 @@ move_row_to_colname <- function(df) {
   df <- rm_void(df)
   df
 }
+
+
+
+
+# APP ---------------------------------------------------------------------
 
 ui <- fluidPage(
   theme = "style.css",
@@ -128,7 +135,30 @@ server <- function(input,
 
   DF <- reactive({
     test <<- input$data1
-    df <- hot_to_r(input$data1)
+    data1 <- input$data1
+    # 判断是否有列增加
+    nc <- length(data1$data[[1]])
+    ncname <- length(data1$params$rColHeaders)
+    if (nc != ncname) {
+      if (nc > ncname) {
+        new_cname <- paste0("V.", seq_len(nc))
+        new_cname <- setdiff(new_cname, unlist(data1$params$rColHeaders))[seq_len(nc - ncname)]
+        data1$params$rColHeaders <- c(data1$params$rColHeaders, new_cname)
+        new_ccls <- rep(list("character"), length(new_cname))
+        names(new_ccls) <- new_cname
+        data1$params$rColClasses <- c(data1$params$rColClasses, new_ccls)
+      } else {
+        data1$params$rColHeaders[data1$changes$ind] <- NULL
+        data1$params$rColClasses[data1$changes$ind] <- NULL
+      }
+    }
+    df <- tryCatch(
+      hot_to_r(data1),
+      error = function(e) {
+        showNotification("Complex operation is not permitted in this table.", type = "error")
+      }
+    )
+    message("Data behind the plot.")
     print(df)
     # browser() # uncomment for debugging
     move_row_to_colname(df)
