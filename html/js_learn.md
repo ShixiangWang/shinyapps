@@ -134,6 +134,64 @@ true
 
 null, undefined 和布尔值 详解：<https://wangdoc.com/javascript/types/null-undefined-boolean.html>.
 
+### 数值
+
+转换和测试方法。
+
+```js
+parseInt()
+parseFloat()
+isNaN()
+isFinite()
+```
+
+### 字符串
+
+单双引号等同。
+
+> 由于 HTML 语言的属性值使用双引号，所以很多项目约定 JavaScript 语言的字符串只使用单引号，本教程遵守这个约定。当然，只使用双引号也完全可以。重要的是坚持使用一种风格，不要一会使用单引号表示字符串，一会又使用双引号表示。
+
+连接运算符（+）可以连接多个单行字符串。
+
+字符串可以被视为字符数组，因此可以使用数组的方括号运算符，用来返回某个位置的字符（位置编号从0开始）。
+
+如果方括号中的数字超过字符串的长度，或者方括号中根本不是数字，则返回 undefined。
+
+```js
+> var s = 'hello';
+undefined
+> s[0]
+'h'
+> s[1]
+'e'
+> 
+> s[-1]
+undefined
+> s.length
+5
+> '𝌆'.length
+2
+```
+
+上面代码中，JavaScript 认为𝌆的长度为 2，而不是 1。
+
+Base64 就是一种编码方法，可以将任意值转成 0～9、A～Z、a-z、+和/这64个字符组成的可打印字符。使用它的主要目的，不是为了加密，而是为了不出现特殊字符，简化程序的处理。
+
+JavaScript 原生提供两个 Base64 相关的方法。
+
+- `btoa()`：任意值转为 Base64 编码
+- `atob()`：Base64 编码转为原来的值
+
+```js
+// 无法在 node 中直接使用
+var string = 'Hello World!';
+btoa(string) // "SGVsbG8gV29ybGQh"
+atob('SGVsbG8gV29ybGQh') // "Hello World!"
+```
+
+### 对象
+
+
 ## electron 使用
 
 ### 创建项目文件夹并安装 electron
