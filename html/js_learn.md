@@ -191,6 +191,120 @@ atob('SGVsbG8gV29ybGQh') // "Hello World!"
 
 ### 对象
 
+js 中对象就是一组“键值对”（key-value）的集合，是一种无序的复合数据集合。
+
+在其他编程语言中，这种对象概念常被称为字典。
+
+对象的所有键名都是字符串（ES6 又引入了 Symbol 值也可以作为键名），所以加不加引号都可以。
+
+```js
+> var obj1 = {a:1, b:2}
+undefined
+> obj1
+{ a: 1, b: 2 }
+> var obj2 = {'a':1, 'b':2}
+undefined
+> obj2
+{ a: 1, b: 2 }
+```
+
+**对象的每一个键名又称为“属性”（property），它的“键值”可以是任何数据类型。如果一个属性的值为函数，通常把这个属性称为“方法”，它可以像函数那样调用。**
+
+```js
+> var obj = {
+... printHello: function(x) {
+..... console.log("Hello" + x)
+..... }
+... }
+undefined
+> obj.printHello('world')
+Helloworld
+```
+
+如果不同的变量名指向同一个对象，那么它们都是这个对象的引用，也就是说指向同一个内存地址。修改其中一个变量，会影响到其他所有变量。
+
+但是，这种引用只局限于对象，如果两个变量指向同一个原始类型的值。那么，变量这时都是值的拷贝。
+
+读取对象的属性，有两种方法，一种是使用点运算符，还有一种是使用方括号运算符。
+
+```js
+> obj1.a
+1
+> obj1['a']
+1
+```
+
+查看属性：
+
+```js
+> Object.keys(obj1)
+[ 'a', 'b' ]
+```
+
+删除：
+
+```js
+> delete obj1.a
+true
+> obj1
+{ b: 2 }
+```
+
+注意，删除一个不存在的属性，delete 不报错，而且返回 true。
+
+用 `in` 运算符判断属性存在：
+
+```js
+> 'a' in obj1
+false
+> 'b' in obj1
+true
+```
+
+`in` 运算符的一个问题是，它不能识别哪些属性是对象自身的，哪些属性是继承的。
+这时候可以使用 `hasOwnProperty` 方法。
+
+```js
+> 'toString' in obj1
+true
+> obj1.hasOwnProperty('toString')
+false
+```
+
+`for...in` 循环用来遍历一个对象的全部属性。
+
+```js
+> var obj = {a: 1, b:2, c:3};
+undefined
+> for (var i in obj) {
+... console.log('key: ', i);
+... console.log('value: ', obj[i]);
+... }
+key:  a
+value:  1
+key:  b
+value:  2
+key:  c
+value:  3
+```
+
+它遍历的是对象所有可遍历（enumerable）的属性（包括继承的），会跳过不可遍历的属性。
+
+`with` 语句提供了修改对象的方便操作，类似于 R 中的 `with`。
+
+```js
+var obj = {
+  p1: 1,
+  p2: 2,
+};
+with (obj) {
+  p1 = 4;
+  p2 = 5;
+}
+// 等同于
+obj.p1 = 4;
+obj.p2 = 5;
+```
 
 ## electron 使用
 
