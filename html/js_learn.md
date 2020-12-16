@@ -1,5 +1,7 @@
 # Javascript 学习笔记
 
+> 主要学习资料：[《网道：javascript 教程》](https://wangdoc.com/javascript/)
+
 ## 第一步
 
 打开谷歌浏览器，按下 `Option + Command + J`（Mac）或者 `Ctrl + Shift + J`（Windows / Linux）进入控制台。
@@ -305,6 +307,244 @@ with (obj) {
 obj.p1 = 4;
 obj.p2 = 5;
 ```
+
+### 函数
+
+函数是一段可以反复调用的代码块，有以下 3 种声明方式。
+
+- function 命令。
+
+```js
+function print(s) {
+  consolo.log(s);
+}
+```
+
+- 函数表达式（注意结尾处的分号）
+
+```js
+var print = function(s) {
+  console.log(a);
+};
+```
+
+- Function 构造函数（最后一个参数被作为函数体）
+
+```js
+var print = new Function(
+  's',
+  'console.log(s)'
+);
+```
+
+JavaScript 语言将函数看作一种值，与其它值（数值、字符串、布尔值等等）地位相同。凡是可以使用值的地方，就能使用函数。
+
+函数有以下一些属性：
+
+- `name` - 函数名
+- `length` - 函数预期传入参数的个数
+- `toString()` 方法返回字符串源码（包括注释）
+
+作用域（scope）指的是变量存在的范围。目前新版 js 有 3 种：
+
+- 全局作用域
+- 函数作用域
+- 块级作用域（ES 6 新增）
+
+注意 js 中的**变量提升**，声明语句在实际运行时会被提升到作用域的顶部。
+
+函数参数不是必需的，JavaScript 允许省略参数。
+
+省略的参数的值就变为 `undefined`。需要注意的是，函数的 `length` 属性与实际传入的参数个数无关，只反映函数预期传入的参数个数。但是，没有办法只省略靠前的参数，而保留靠后的参数。如果一定要省略靠前的参数，只有显式传入 `undefined`。
+
+```js
+> function echo(a, b) {
+... return a;
+... }
+undefined
+> echo(1, 2, 3)
+1
+> echo(1)
+1
+> echo()
+undefined
+> echo(undefined, 1)
+undefined
+```
+
+如果有同名的参数，则取最后出现的那个值。
+
+函数传参方式：
+
+- 函数参数如果是原始类型的值（数值、字符串、布尔值），传递方式是传值传递（passes by value）。
+- 如果函数参数是复合类型的值（数组、对象、其他函数），传递方式是传址传递（pass by reference）。
+
+`arguments` 对象：由于 JavaScript 允许函数有不定数目的参数，所以需要一种机制，可以在函数体内部读取所有参数。这就是 `arguments` 对象的由来。
+
+`arguments` 对象包含了函数运行时的所有参数，`arguments[0]` 就是第一个参数，`arguments[1]` 就是第二个参数，以此类推。这个对象只有在函数体内部，才可以使用。
+
+```js
+var f = function (one) {
+  console.log(arguments[0]);
+  console.log(arguments[1]);
+  console.log(arguments[2]);
+}
+
+f(1, 2, 3)
+// 1
+// 2
+// 3
+```
+
+正常模式下，`arguments 对象可以在运行时修改。
+
+```js
+var f = function(a, b) {
+  arguments[0] = 3;
+  arguments[1] = 2;
+  return a + b;
+}
+
+f(1, 1) // 5
+```
+
+严格模式下，`arguments` 对象与函数参数不具有联动关系。也就是说，修改 `arguments` 对象不会影响到实际的函数参数。
+
+```js
+var f = function(a, b) {
+  'use strict'; // 开启严格模式
+  arguments[0] = 3;
+  arguments[1] = 2;
+  return a + b;
+}
+
+f(1, 1) // 2
+```
+
+通过 `arguments` 对象 `length` 属性，可以判断函数调用时到底带几个参数。
+
+需要注意的是，虽然 `arguments` 很像数组，但它是一个对象。
+
+如果要让 `arguments` 对象使用数组方法，真正的解决方法是将 `arguments` 转为真正的数组。下面是两种常用的转换方法：`slice` 方法和逐一填入新数组。
+
+```js
+var args = Array.prototype.slice.call(arguments);
+
+// 或者
+var args = [];
+for (var i = 0; i < arguments.length; i++) {
+  args.push(arguments[i]);
+}
+```
+
+`arguments` 对象带有一个 `callee` 属性，返回它所对应的原函数。
+
+```js
+var f = function () {
+  console.log(arguments.callee === f);
+}
+
+f() // true
+```
+
+### 函数闭包
+
+正常情况下，函数外部无法读取函数内部声明的变量。
+
+```js
+function f1() {
+  var n = 999;
+}
+
+console.log(n)
+// Uncaught ReferenceError: n is not defined(
+```
+
+如果出于种种原因，需要得到函数内的局部变量。正常情况下，这是办不到的，只有通过变通方法才能实现。那就是在函数的内部，再定义一个函数。
+
+```js
+function f1() {
+  var n = 999;
+  function f2() {
+　　console.log(n); // 999
+  }
+}
+```
+
+**上面代码中，函数 `f2` 就在函数 `f1` 内部，这时 `f1` 内部的所有局部变量，对 `f2` 都是可见的。但是反过来就不行，`f2` 内部的局部变量，对 `f1` 就是不可见的。**
+
+那么只要把 `f2` 作为返回值，我们不就可以在 `f1` 外部读取它的内部变量了吗！
+
+```js
+function f1() {
+  var n = 999;
+  function f2() {
+    console.log(n);
+  }
+  return f2;
+}
+
+var result = f1();
+result(); // 999
+```
+
+**闭包就是函数 `f2`，即能够读取其他函数内部变量的函数。由于在 JavaScript 语言中，只有函数内部的子函数才能读取内部变量，因此可以把闭包简单理解成“定义在一个函数内部的函数”。闭包最大的特点，就是它可以“记住”诞生的环境，比如 `f2` 记住了它诞生的环境 `f1`，所以从 `f2` 可以得到 `f1` 的内部变量。在本质上，闭包就是将函数内部和函数外部连接起来的一座桥梁。**
+
+**闭包的最大用处有两个**
+
+- 一个是可以读取外层函数内部的变量，另一个就是让这些变量始终保持在内存中，即闭包可以使得它诞生环境一直存在。
+- 闭包的另一个用处，是封装对象的私有属性和私有方法。
+
+```js
+function createIncrementor(start) {
+  return function () {
+    return start++;
+  };
+}
+
+var inc = createIncrementor(5);
+
+inc() // 5
+inc() // 6
+inc() // 7
+```
+
+```js
+function Person(name) {
+  var _age;
+  function setAge(n) {
+    _age = n;
+  }
+  function getAge() {
+    return _age;
+  }
+
+  return {
+    name: name,
+    getAge: getAge,
+    setAge: setAge
+  };
+}
+
+var p1 = Person('张三');
+p1.setAge(25);
+p1.getAge() // 25
+```
+
+注意，外层函数每次运行，都会生成一个新的闭包，而这个闭包又会保留外层函数的内部变量，所以内存消耗很大。因此不能滥用闭包，否则会造成网页的性能问题。
+
+### eval 命令
+
+eval命令接受一个字符串作为参数，并将这个字符串当作语句执行。
+
+```js
+eval('var a = 1;');
+a // 1
+```
+
+`eval` 没有自己的作用域，都在当前作用域内执行，因此可能会修改当前作用域的变量的值，造成安全问题。
+
+为了防止这种风险，JavaScript 规定，如果使用严格模式，`eval` 内部声明的变量，不会影响到外部作用域。
 
 ## electron 使用
 
