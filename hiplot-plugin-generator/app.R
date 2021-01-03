@@ -11,10 +11,10 @@ library(shiny)
 library(shinyWidgets)
 library(DTedit) # https://github.com/jbryer/DTedit
 
-ParseString2BoolOrString = function(x) {
-  y = as.logical(x)
+ParseString2BoolOrString <- function(x) {
+  y <- as.logical(x)
   if (is.na(y)) {
-    y = x
+    y <- x
   }
   y
 }
@@ -26,7 +26,7 @@ ParseString2BoolOrString = function(x) {
 #   x
 # }
 
-ParseString2FunCall = function(x) {
+ParseString2FunCall <- function(x) {
   if (grepl("\\(", x)) {
     eval(parse(text = x))
   } else {
@@ -34,21 +34,21 @@ ParseString2FunCall = function(x) {
   }
 }
 
-RtoJSON = function(x) {
+RtoJSON <- function(x) {
   tryCatch(
     toJSON(x, null = "null", auto_unbox = TRUE),
     error = function(e) {
       if (class(x) == "name") {
         "" # Report void string to let user modify by themselves
       } else if (class(x) == "call") {
-        x = tryCatch(
+        x <- tryCatch(
           toJSON(eval(x), null = "null", auto_unbox = TRUE),
           error = function(e) {
-            x = as.character(x)
-            idx = !sapply(x, function(y) {
+            x <- as.character(x)
+            idx <- !sapply(x, function(y) {
               endsWith(y, ")")
             })
-            x[idx] = paste0(x[idx], "()")
+            x[idx] <- paste0(x[idx], "()")
           }
         )
       } else {
@@ -62,54 +62,30 @@ RtoJSON = function(x) {
 }
 
 # 根据修改后的初始化参数设定生成后端 data.json 和 plot.R 模板文件
-GenerateBackendConfigs = function() {
+GenerateBackendConfigs <- function() {
 
 }
 
 # 根据自定义调整 UI 控件后确定生成 ui.json 文件
-GenerateFrontendConfigs = function() {
+GenerateFrontendConfigs <- function() {
 
 }
 
 
-ParseFunArgs = function(pkg_fun) {
-  args_list = as.list(args(pkg_fun))
+ParseFunArgs <- function(pkg_fun) {
+  args_list <- as.list(args(pkg_fun))
   # Remove ... and elements with no name
-  args_list = args_list[!names(args_list) %in% c("...", "")]
+  args_list <- args_list[!names(args_list) %in% c("...", "")]
   sapply(args_list, RtoJSON)
-}
-
-##### Callback functions.
-my.insert.callback <- function(data, row) {
-  message("Row: ", row)
-  nr = nrow(data)
-  if (nr > 1) {
-    data = rbind(data[nr, ], data[1:(nr - 1), ])
-  }
-  message("Data table after insertion:")
-  print(data)
-  return(data)
-}
-
-my.update.callback <- function(data, olddata, row) {
-  message("Row: ", row)
-  message("Data table after update:")
-  print(data)
-  return(data)
-}
-
-my.delete.callback <- function(data, row) {
-  message("Row: ", row)
-  message("Data table after deletion:")
-  print(data)
-  return(data)
 }
 
 ##### Create the Shiny server
 server <- function(input, output) {
+  data_copy <- data.frame()
+
   observeEvent(input$fun, {
-    pkg_fun = reactive({
-      ic = tryCatch(
+    pkg_fun <- reactive({
+      ic <- tryCatch(
         {
           class(eval(parse(text = input$fun)))
         },
@@ -127,41 +103,83 @@ server <- function(input, output) {
     })
 
     if (length(pkg_fun()) != 0 & pkg_fun() != "") {
-      mydata = ParseFunArgs(eval(parse(text = pkg_fun()))) %>%
+      mydata <- ParseFunArgs(eval(parse(text = pkg_fun()))) %>%
         as.data.frame() %>%
         tibble::rownames_to_column("id") %>%
         setNames(c("Parameter", "InitialValue"))
     } else {
-      mydata = data.frame(
+      mydata <- data.frame(
         Parameter = character(),
         InitialValue = character(),
         stringsAsFactors = FALSE
       )
     }
 
+    data_copy <- mydata
+
+    ##### Callback functions.
+    my.insert.callback <- function(data, row) {
+      message("Row: ", row)
+      nr <- nrow(data)
+      if (nr > 1) {
+        data <- rbind(data[nr, ], data[1:(nr - 1), ])
+      }
+      message("Data table after insertion:")
+      print(data)
+      message("=====")
+
+      senv <- parent.env(parent.env(environment()))
+      assign("data_copy", data, envir = senv)
+      return(data)
+    }
+
+    my.update.callback <- function(data, olddata, row) {
+      message("Row: ", row)
+      message("Data table after update:")
+      print(data)
+      message("=====")
+
+      senv <- parent.env(parent.env(environment()))
+      assign("data_copy", data, envir = senv)
+      return(data)
+    }
+
+    my.delete.callback <- function(data, row) {
+      message("Row: ", row)
+      message("Data table after deletion:")
+      data <- data[-row, ]
+      print(data)
+      message("=====")
+
+      senv <- parent.env(parent.env(environment()))
+      assign("data_copy", data, envir = senv)
+      return(data)
+    }
+
     ##### Create the DTedit object
     DTedit::dtedit(input, output,
-                   name = "args",
-                   thedata = mydata,
-                   edit.cols = c("Parameter", "InitialValue"),
-                   edit.label.cols = c("Parameter", "Initial value (in json format)"),
-                   # input.types = c(notes = "textAreaInput"),
-                   view.cols = c("Parameter", "InitialValue"),
-                   show.copy = FALSE,
-                   callback.update = my.update.callback,
-                   callback.insert = my.insert.callback,
-                   callback.delete = my.delete.callback,
-                   datatable.options = list(
-                     pageLength = 30
-                   )
+      name = "args",
+      thedata = mydata,
+      edit.cols = c("Parameter", "InitialValue"),
+      edit.label.cols = c("Parameter", "Initial value (in json format)"),
+      # input.types = c(notes = "textAreaInput"),
+      view.cols = c("Parameter", "InitialValue"),
+      show.copy = FALSE,
+      callback.update = my.update.callback,
+      callback.insert = my.insert.callback,
+      callback.delete = my.delete.callback,
+      datatable.options = list(
+        pageLength = 30
+      )
     )
   })
 
   ##### 生成 data.json 和 plot.R
   observeEvent(input$backend, {
     GenerateFrontendConfigs()
+    print(data_copy)
     # download
-    showNotification("Backend files generated.", type = "success")
+    showNotification("Backend files generated.", type = "message")
   })
 }
 
