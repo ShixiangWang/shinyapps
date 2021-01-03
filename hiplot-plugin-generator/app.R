@@ -63,7 +63,7 @@ RtoJSON <- function(x) {
 
 # 根据修改后的初始化参数设定生成后端 data.json 和 plot.R 模板文件
 GenerateBackendConfigs <- function() {
-
+  # mydata %>% tibble::column_to_rownames(var = "Parameter") %>% t() %>% as.data.frame() %>% toJSON(pretty = T)
 }
 
 # 根据自定义调整 UI 控件后确定生成 ui.json 文件
