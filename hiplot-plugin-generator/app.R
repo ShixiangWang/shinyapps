@@ -171,7 +171,7 @@ server <- function(input, output) {
           ""
         }
       )
-      if (ic != "function") {
+      if (ic != "function" & ic != "") {
         showNotification("Your input is not a function!", type = "warning", duration = 2)
         ""
       } else {
