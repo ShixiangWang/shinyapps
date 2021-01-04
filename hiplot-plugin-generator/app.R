@@ -115,7 +115,6 @@ GenerateBackendConfigs <- function(data, fun, outprefix = tempfile()) {
   writeLines(json_template, paste0(outprefix, "_data.json"))
 
   # Generate Plot.R
-  print(data_cp)
   data_cp$plot <- paste0("conf$extra$", data_cp$Parameter)
   args_seq <- paste0("    ", paste(data_cp$Parameter, data_cp$plot, sep = " = "))
   args_seq[-length(args_seq)] <- paste0(args_seq[-length(args_seq)], ",")
