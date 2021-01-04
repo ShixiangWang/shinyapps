@@ -4,6 +4,7 @@
 # 自动生成 ui 并支持编辑
 # 导出
 
+library(zip)
 library(data.table)
 library(jsonlite)
 library(tidyverse)
@@ -79,6 +80,9 @@ RfromJSON <- function(x) {
 
 # 根据修改后的初始化参数设定生成后端 data.json 和 plot.R 模板文件
 GenerateBackendConfigs <- function(data, fun, outprefix = tempfile()) {
+  message("Generating backend files...")
+  rownames(data) <- NULL
+  print(data)
   outdir <- dirname(outprefix)
   if (!dir.exists(outdir)) dir.create(outdir, recursive = TRUE)
 
@@ -111,6 +115,7 @@ GenerateBackendConfigs <- function(data, fun, outprefix = tempfile()) {
   writeLines(json_template, paste0(outprefix, "_data.json"))
 
   # Generate Plot.R
+  print(data_cp)
   data_cp$plot <- paste0("conf$extra$", data_cp$Parameter)
   args_seq <- paste0("    ", paste(data_cp$Parameter, data_cp$plot, sep = " = "))
   args_seq[-length(args_seq)] <- paste0(args_seq[-length(args_seq)], ",")
@@ -187,7 +192,7 @@ server <- function(input, output) {
       )
     }
 
-    data_copy <- mydata
+    data_copy <<- mydata
 
     ##### Callback functions.
     my.insert.callback <- function(data, row) {
@@ -247,12 +252,21 @@ server <- function(input, output) {
   })
 
   ##### 生成 data.json 和 plot.R
-  observeEvent(input$backend, {
-    GenerateBackendConfigs(data_copy)
-    print(data_copy)
-    # download
-    showNotification("Backend files generated.", type = "message", duration = 2)
-  })
+  output$backend <- downloadHandler(
+    filename = function() {
+      paste("plugin-backend-", Sys.Date(), ".zip", sep="")
+    },
+    contentType = "application/zip",
+    content = function(file) {
+      backend_files <- GenerateBackendConfigs(data_copy, fun = input$fun)
+      zip::zipr(zipfile = file,
+                files = backend_files, recurse = FALSE)
+      file.remove(backend_files)
+      showNotification("Backend files generated.\nModify the content properly.",
+                       type = "message", duration = 2)
+    }
+  )
+
 }
 
 ##### Create the shiny UI
@@ -274,7 +288,7 @@ ui <- fluidPage(
     uiOutput("args")
   ),
   br(),
-  actionButton("backend", "Generate backend template files", icon = icon("mouse"))
+  downloadButton("backend", label = "Generate backend template files", icon = icon("download"))
 )
 
 ##### Start the shiny app

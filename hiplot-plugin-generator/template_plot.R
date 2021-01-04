@@ -64,7 +64,7 @@ ParseInfinity = function(x, pos = TRUE) {
 #           plot section
 #####################################
 {
-  %s
+%s
 }
 
 # message("Plotting")
