@@ -6,7 +6,7 @@
 
 library(data.table)
 library(jsonlite)
-library(dplyr)
+library(tidyverse)
 library(shiny)
 library(shinyWidgets)
 library(DTedit) # https://github.com/jbryer/DTedit
@@ -61,9 +61,81 @@ RtoJSON <- function(x) {
   )
 }
 
+RfromJSON <- function(x) {
+  y <- tryCatch(
+    fromJSON(x),
+    error = function(e) {
+      x
+    }
+  )
+
+  if (length(y) > 1) {
+    return(x)
+  } else {
+    return(y)
+  }
+  # y
+}
+
 # 根据修改后的初始化参数设定生成后端 data.json 和 plot.R 模板文件
-GenerateBackendConfigs <- function() {
-  # mydata %>% tibble::column_to_rownames(var = "Parameter") %>% t() %>% as.data.frame() %>% toJSON(pretty = T)
+GenerateBackendConfigs <- function(data, fun, outprefix = tempfile()) {
+  outdir <- dirname(outprefix)
+  if (!dir.exists(outdir)) dir.create(outdir, recursive = TRUE)
+
+  data_cp <- data
+  data <- data %>%
+    tibble::column_to_rownames(var = "Parameter") %>%
+    t() %>%
+    as.data.frame()
+  rownames(data) <- NULL
+  data <- sapply(data, RfromJSON) %>%
+    toJSON(pretty = TRUE, auto_unbox = TRUE, null = "null") %>%
+    as.character()
+  data
+
+
+  # Generate data.json
+  json_template <- readLines(
+    if (file.exists("template_data.json")) {
+      "template_data.json"
+    } else {
+      "hiplot-plugin-generator/template_data.json"
+    }
+  )
+  modify_row <- grepl("%s", json_template)
+  json_template[modify_row] <- sprintf(
+    json_template[modify_row],
+    data
+  )
+
+  writeLines(json_template, paste0(outprefix, "_data.json"))
+
+  # Generate Plot.R
+  data_cp$plot <- paste0("conf$extra$", data_cp$Parameter)
+  args_seq <- paste0("    ", paste(data_cp$Parameter, data_cp$plot, sep = " = "))
+  args_seq[-length(args_seq)] <- paste0(args_seq[-length(args_seq)], ",")
+  args_seq <- c(
+    paste0("  p = ", fun, "("),
+    args_seq,
+    "  )"
+  )
+  args_seq <- paste(args_seq, collapse = "\n")
+  plot_template <- readLines(
+    if (file.exists("template_plot.R")) {
+      "template_plot.R"
+    } else {
+      "hiplot-plugin-generator/template_plot.R"
+    }
+  )
+  modify_row <- grepl("%s", plot_template)
+  plot_template[modify_row] <- sprintf(
+    plot_template[modify_row],
+    args_seq
+  )
+
+  writeLines(plot_template, paste0(outprefix, "_plot.R"))
+
+  return(c(paste0(outprefix, "_data.json"), paste0(outprefix, "_plot.R")))
 }
 
 # 根据自定义调整 UI 控件后确定生成 ui.json 文件
@@ -90,12 +162,12 @@ server <- function(input, output) {
           class(eval(parse(text = input$fun)))
         },
         error = function(err) {
-          showNotification("Function not found!", type = "error")
+          showNotification("Function not found!", type = "error", duration = 2)
           ""
         }
       )
       if (ic != "function") {
-        showNotification("Your input is not a function!", type = "warning")
+        showNotification("Your input is not a function!", type = "warning", duration = 2)
         ""
       } else {
         input$fun
@@ -176,10 +248,10 @@ server <- function(input, output) {
 
   ##### 生成 data.json 和 plot.R
   observeEvent(input$backend, {
-    GenerateFrontendConfigs()
+    GenerateBackendConfigs(data_copy)
     print(data_copy)
     # download
-    showNotification("Backend files generated.", type = "message")
+    showNotification("Backend files generated.", type = "message", duration = 2)
   })
 }
 

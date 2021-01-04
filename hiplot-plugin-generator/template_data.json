@@ -1,0 +1,30 @@
+{
+  "module": "basic",
+  "tool": "set-a-tool-name",
+  "params": {
+    "textarea": {
+      "datTable": ""
+    },
+    "config": {
+      "general": {
+        "cmd": "",
+        "imageExportType": ["png", "pdf"],
+        "size": {
+          "width": 4,
+          "height": 5
+        },
+        "theme": "theme_pubr",
+        "title": ""
+      },
+      "extra": %s
+    }
+  },
+  "exampleData": {
+    "config": {
+      "general": {
+      }
+    },
+    "textarea": {
+    }
+  }
+}
