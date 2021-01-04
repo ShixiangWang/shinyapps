@@ -271,6 +271,28 @@ server <- function(input, output) {
 
 ##### Create the shiny UI
 ui <- fluidPage(
+  theme = "style.css",
+  # Title
+  tags$div(
+    id = "titleBar",
+    tags$div(
+      id = "container",
+      tags$h1("Hiplot Plugin Generator")
+    )
+  ),
+  # Intro
+  tags$div(
+    id = "outer-content",
+    tags$div(
+      id = "intro",
+      markdown(
+        "This tool is designed to convert a plotting function (mostly `ggplot2` based) to a [Hiplot platform](https://hiplot.com.cn/) plugin.\
+        It will generate multiple files in the form of `.json` and `.R`.
+        You need to know some about [JSON](https://www.json.org/json-en.html) when you use this shiny.
+        "
+      )
+    )
+  ),
   h3("Input"),
   shinyWidgets::searchInput(
     inputId = "fun",
@@ -287,6 +309,7 @@ ui <- fluidPage(
     align = "center",
     uiOutput("args")
   ),
+  br(),
   br(),
   downloadButton("backend", label = "Generate backend template files", icon = icon("download"))
 )
