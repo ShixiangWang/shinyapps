@@ -79,11 +79,10 @@ RfromJSON <- function(x) {
 }
 
 # 根据修改后的初始化参数设定生成后端 data.json 和 plot.R 模板文件
-GenerateBackendConfigs <- function(data, fun, outprefix = tempfile()) {
-  message("Generating backend files...")
+GenerateBackendConfigs <- function(data, fun, outdir = tempfile()) {
+  message("Generating backend files in ", outdir)
   rownames(data) <- NULL
   print(data)
-  outdir <- dirname(outprefix)
   if (!dir.exists(outdir)) dir.create(outdir, recursive = TRUE)
 
   data_cp <- data
@@ -111,8 +110,15 @@ GenerateBackendConfigs <- function(data, fun, outprefix = tempfile()) {
     json_template[modify_row],
     data
   )
+  writeLines(json_template, file.path(outdir, "data.json"))
 
-  writeLines(json_template, paste0(outprefix, "_data.json"))
+  # Generate meta.json
+  json_meta <- if (file.exists("template_meta.json")) {
+      "template_meta.json"
+    } else {
+      "hiplot-plugin-generator/template_meta.json"
+    }
+  file.copy(json_meta, file.path(outdir, "meta.json"))
 
   # Generate Plot.R
   data_cp$plot <- paste0("conf$extra$", data_cp$Parameter)
@@ -136,10 +142,11 @@ GenerateBackendConfigs <- function(data, fun, outprefix = tempfile()) {
     plot_template[modify_row],
     args_seq
   )
+  writeLines(plot_template, file.path(outdir, "plot.R"))
 
-  writeLines(plot_template, paste0(outprefix, "_plot.R"))
-
-  return(c(paste0(outprefix, "_data.json"), paste0(outprefix, "_plot.R")))
+  return(c(file.path(outdir, "data.json"),
+           file.path(outdir, "meta.json"),
+           file.path(outdir, "plot.R")))
 }
 
 # 根据自定义调整 UI 控件后确定生成 ui.json 文件
@@ -251,17 +258,18 @@ server <- function(input, output) {
   })
 
   ##### 生成 data.json 和 plot.R
-  output$backend <- downloadHandler(
+  output$download <- downloadHandler(
     filename = function() {
-      paste("plugin-backend-", Sys.Date(), ".zip", sep="")
+      paste("hiplot-plugin-template-", Sys.Date(), ".zip", sep = "")
     },
     contentType = "application/zip",
     content = function(file) {
-      backend_files <- GenerateBackendConfigs(data_copy, fun = input$fun)
+      outdir <- tempfile()
+      on.exit(unlink(outdir))
+      backend_files <- GenerateBackendConfigs(data_copy, fun = input$fun, outdir = outdir)
       zip::zipr(zipfile = file,
                 files = backend_files, recurse = FALSE)
-      file.remove(backend_files)
-      showNotification("Backend files generated.\nModify the content properly.",
+      showNotification("Files generated.\nPlease modify the content properly.",
                        type = "message", duration = 2)
     }
   )
@@ -310,7 +318,9 @@ ui <- fluidPage(
   ),
   br(),
   br(),
-  downloadButton("backend", label = "Generate backend template files", icon = icon("download"))
+  downloadButton("download", label = "Generate and download", icon = icon("download")),
+  br(),
+  tags$a("Read the hiplot development guidline for more", href = "https://hiplot.com.cn/docs/zh/development-guides/")
 )
 
 ##### Start the shiny app

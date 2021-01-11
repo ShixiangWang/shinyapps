@@ -1,0 +1,22 @@
+{
+  "name": {
+    "zh_cn": "<中文名>",
+    "en": "<English name>"
+  },
+  "intro": {
+    "zh_cn": "<中文介绍>",
+    "en": "<English introduction>"
+  },
+  "src": "",
+  "href": "/<module-type, e.g. basic>/<short-name>",
+  "tag": [
+    "vue"
+  ],
+  "meta": {
+    "score": 4,
+    "author": "<your_name>",
+    "email": "<your_email>",
+    "releaseDate": "2021-01-01",
+    "updateDate": "2021-01-01"
+  }
+}
