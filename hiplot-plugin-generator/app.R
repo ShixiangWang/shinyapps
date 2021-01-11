@@ -12,29 +12,6 @@ library(shiny)
 library(shinyWidgets)
 library(DTedit) # https://github.com/jbryer/DTedit
 
-ParseString2BoolOrString <- function(x) {
-  y <- as.logical(x)
-  if (is.na(y)) {
-    y <- x
-  }
-  y
-}
-
-# ParseNone2NULL = function(x) {
-#   if (is.null(x)) {
-#     x = NULL
-#   }
-#   x
-# }
-
-ParseString2FunCall <- function(x) {
-  if (grepl("\\(", x)) {
-    eval(parse(text = x))
-  } else {
-    eval(parse(text = paste0(x, "()")))
-  }
-}
-
 RtoJSON <- function(x) {
   tryCatch(
     toJSON(x, null = "null", auto_unbox = TRUE),
@@ -78,9 +55,62 @@ RfromJSON <- function(x) {
   # y
 }
 
-# 根据修改后的初始化参数设定生成后端 data.json 和 plot.R 模板文件
-GenerateBackendConfigs <- function(data, fun, outdir = tempfile()) {
-  message("Generating backend files in ", outdir)
+MakeUI <- function(x) {
+  # type: select, switch, slider, text-field
+  y <- sapply(x, function(i) {
+    if (is.character(i)) {
+      # Typically it is a select element
+      list(
+        type = "select",
+        label = list(
+          en = "English desc",
+          zh = "中文描述"
+        ),
+        class = "col-12 col-md-6",
+        items = c("<a>", "<b>", "<c>")
+      )
+    } else if (is.numeric(i)) {
+      list(
+        type = "slider",
+        label = list(
+          en = "English desc",
+          zh = "中文描述"
+        ),
+        class = "col-12 col-md-6",
+        max = i + 1,
+        min = 0,
+        step = 1
+      )
+    } else if (is.logical(i)) {
+      list(
+        type = "switch",
+        label = list(
+          en = "English desc",
+          zh = "中文描述"
+        ),
+        class = "col-12 col-md-4"
+      )
+    } else {
+      list(
+        type = "text-field",
+        label = list(
+          en = "English desc",
+          zh = "中文描述"
+        ),
+        class = "col-12 col-md-6"
+      )
+    }
+  })
+
+  y <- y %>%
+    toJSON(pretty = TRUE, auto_unbox = TRUE, null = "null") %>%
+    as.character()
+  gsub("\n  ", "\n        ", y)
+}
+
+# 生成 Hiplot 插件模板文件
+GenerateConfigs <- function(data, fun, outdir = tempfile()) {
+  message("Generating hiplot plugin files in ", outdir)
   rownames(data) <- NULL
   print(data)
   if (!dir.exists(outdir)) dir.create(outdir, recursive = TRUE)
@@ -91,37 +121,59 @@ GenerateBackendConfigs <- function(data, fun, outdir = tempfile()) {
     t() %>%
     as.data.frame()
   rownames(data) <- NULL
-  data <- sapply(data, RfromJSON) %>%
+  # Remove "data" from data.json in "extra" map
+  data_extra <- sapply(data[, colnames(data) != "data"], RfromJSON)
+  data <- data_extra %>%
     toJSON(pretty = TRUE, auto_unbox = TRUE, null = "null") %>%
     as.character()
-  data
-
+  data <- gsub("\n  ", "\n        ", data)
+  # data
 
   # Generate data.json
-  json_template <- readLines(
+  json_data <- readLines(
     if (file.exists("template_data.json")) {
       "template_data.json"
     } else {
       "hiplot-plugin-generator/template_data.json"
     }
   )
-  modify_row <- grepl("%s", json_template)
-  json_template[modify_row] <- sprintf(
-    json_template[modify_row],
+  modify_row <- grepl("%s", json_data)
+  json_data[modify_row] <- sprintf(
+    json_data[modify_row],
     data
   )
-  writeLines(json_template, file.path(outdir, "data.json"))
+  writeLines(json_data, file.path(outdir, "data.json"))
+
+  # Generate ui.json
+  # Make a default ui for each "extra" elements
+  json_ui <- readLines(
+    if (file.exists("template_ui.json")) {
+      "template_ui.json"
+    } else {
+      "hiplot-plugin-generator/template_ui.json"
+    }
+  )
+  modify_row <- grepl("%s", json_ui)
+  json_ui[modify_row] <- sprintf(
+    json_ui[modify_row],
+    MakeUI(data_extra)
+  )
+  writeLines(json_ui, file.path(outdir, "ui.json"))
 
   # Generate meta.json
   json_meta <- if (file.exists("template_meta.json")) {
-      "template_meta.json"
-    } else {
-      "hiplot-plugin-generator/template_meta.json"
-    }
+    "template_meta.json"
+  } else {
+    "hiplot-plugin-generator/template_meta.json"
+  }
   file.copy(json_meta, file.path(outdir, "meta.json"))
 
   # Generate Plot.R
-  data_cp$plot <- paste0("conf$extra$", data_cp$Parameter)
+  data_cp$plot <- ifelse(
+    data_cp$Parameter == "data",
+    "data",
+    paste0("conf$extra$", data_cp$Parameter)
+  )
   args_seq <- paste0("    ", paste(data_cp$Parameter, data_cp$plot, sep = " = "))
   args_seq[-length(args_seq)] <- paste0(args_seq[-length(args_seq)], ",")
   args_seq <- c(
@@ -144,16 +196,13 @@ GenerateBackendConfigs <- function(data, fun, outdir = tempfile()) {
   )
   writeLines(plot_template, file.path(outdir, "plot.R"))
 
-  return(c(file.path(outdir, "data.json"),
-           file.path(outdir, "meta.json"),
-           file.path(outdir, "plot.R")))
+  return(c(
+    file.path(outdir, "data.json"),
+    file.path(outdir, "ui.json"),
+    file.path(outdir, "meta.json"),
+    file.path(outdir, "plot.R")
+  ))
 }
-
-# 根据自定义调整 UI 控件后确定生成 ui.json 文件
-GenerateFrontendConfigs <- function() {
-
-}
-
 
 ParseFunArgs <- function(pkg_fun) {
   args_list <- as.list(args(pkg_fun))
@@ -266,14 +315,16 @@ server <- function(input, output) {
     content = function(file) {
       outdir <- tempfile()
       on.exit(unlink(outdir))
-      backend_files <- GenerateBackendConfigs(data_copy, fun = input$fun, outdir = outdir)
-      zip::zipr(zipfile = file,
-                files = backend_files, recurse = FALSE)
+      backend_files <- GenerateConfigs(data_copy, fun = input$fun, outdir = outdir)
+      zip::zipr(
+        zipfile = file,
+        files = backend_files, recurse = FALSE
+      )
       showNotification("Files generated.\nPlease modify the content properly.",
-                       type = "message", duration = 2)
+        type = "message", duration = 2
+      )
     }
   )
-
 }
 
 ##### Create the shiny UI

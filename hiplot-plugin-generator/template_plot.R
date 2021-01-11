@@ -34,7 +34,9 @@ ParseString2BoolOrString = function(x) {
 
 ParseNone2NULL = function(x) {
   if (is.null(x)) {
-    x = NULL
+    x <- NULL
+  } else if (x == "none") {
+    x <- NULL
   }
   x
 }
@@ -48,6 +50,17 @@ ParseString2FunCall = function(x) {
 }
 
 ParseInfinity = function(x, pos = TRUE) {
+  if (is.character(x)) {
+    x <- gsub(" ", "", x)
+    if (x == "Inf") {
+      x <- Inf
+    } else if (x == "-Inf") {
+      x <- -Inf
+    } else {
+      x <- NA
+    }
+  }
+
   if (is.infinite(x)) {
     if (pos) Inf else -Inf
   } else {

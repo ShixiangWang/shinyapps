@@ -1,6 +1,6 @@
 {
   "module": "basic",
-  "tool": "set-a-tool-name",
+  "tool": "<short-name>",
   "params": {
     "textarea": {
       "datTable": ""
