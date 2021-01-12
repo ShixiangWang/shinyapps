@@ -213,6 +213,14 @@ ParseFunArgs <- function(pkg_fun) {
 
 ##### Create the Shiny server
 server <- function(input, output) {
+
+  observeEvent(input$userfile, {
+    if (file.exists(input$userfile$datapath)) {
+      # Add all functions from user file to the namespace
+      source(input$userfile$datapath, local = FALSE, verbose = TRUE)
+    }
+  })
+
   data_copy <- data.frame()
 
   observeEvent(input$fun, {
@@ -352,13 +360,26 @@ ui <- fluidPage(
     )
   ),
   h3("Input"),
-  shinyWidgets::searchInput(
-    inputId = "fun",
-    label = "Function to convert",
-    btnSearch = icon("mouse"),
-    btnReset = icon("remove"),
-    placeholder = "ggpubr::ggboxplot",
-    width = "80%"
+  fluidRow(
+    column(
+      6,
+      shinyWidgets::searchInput(
+        inputId = "fun",
+        label = "Function to convert",
+        btnSearch = icon("mouse"),
+        btnReset = icon("remove"),
+        placeholder = "ggpubr::ggboxplot",
+        width = "80%"
+      )),
+    column(
+      6,
+      fileInput(
+        "userfile",
+        "(Optional) Upload script for your custom function",
+        accept = "text/plain",
+        width = "80%",
+        placeholder = "Input xx.R before search"
+      ))
   ),
   h3("Editable Function Parameters"),
   column(
@@ -374,7 +395,7 @@ ui <- fluidPage(
   tags$a("Read the hiplot development guidline for more", href = "https://hiplot.com.cn/docs/zh/development-guides/"),
   fluidRow(
     tags$br(),
-    HTML("<p style=\"text-align:center\">&copy; 2020 <a href=\"https://shixiangwang.github.io/home/\">Shixiang Wang</a><p></p>"),
+    HTML("<p style=\"text-align:center\">&copy; 2020 <a href=\"https://shixiangwang.github.io/home/\">Shixiang Wang</a> & Hiplot<p></p>"),
     tags$br(),
     tags$script(
       type = "text/javascript",
