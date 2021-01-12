@@ -371,7 +371,17 @@ ui <- fluidPage(
   br(),
   downloadButton("download", label = "Generate and download", icon = icon("download")),
   br(),
-  tags$a("Read the hiplot development guidline for more", href = "https://hiplot.com.cn/docs/zh/development-guides/")
+  tags$a("Read the hiplot development guidline for more", href = "https://hiplot.com.cn/docs/zh/development-guides/"),
+  fluidRow(
+    tags$br(),
+    HTML("<p style=\"text-align:center\">&copy; 2020 <a href=\"https://shixiangwang.github.io/home/\">Shixiang Wang</a><p></p>"),
+    tags$br(),
+    tags$script(
+      type = "text/javascript",
+      src = "//rf.revolvermaps.com/0/0/8.js?i=51ge0eq3k39&amp;m=7&amp;c=ff0000&amp;cr1=ffffff&amp;f=arial&amp;l=33",
+      async = "async"
+    )
+  )
 )
 
 ##### Start the shiny app
